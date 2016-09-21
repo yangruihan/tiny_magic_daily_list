@@ -6,9 +6,10 @@
 Usage:
     tm_daily_list.py (new | n)
     tm_daily_list.py (show | s) [-d <date>]
+    tm_daily_list.py (add | a) [<index>] <content>
+    tm_daily_list.py (modify | f) <index> <content>
     tm_daily_list.py (complete | c) <index>
     tm_daily_list.py (redo | r) <index>
-    tm_daily_list.py (add | a) [<index>] <content>
     tm_daily_list.py (remove | m) <index>
     tm_daily_list.py (delete | d) <date>
     tm_daily_list.py (-h | --help)
