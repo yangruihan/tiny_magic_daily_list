@@ -30,6 +30,8 @@ import time
 
 from docopt import docopt
 
+from tm_daily_list_mission import Mission
+
 DEFAULT_SAVE_PATH = "./data/"
 DEFAULT_JSON_CONTENT = r"""{{
     "title": "",
@@ -76,6 +78,52 @@ class TMDailyList:
         :return:
         """
         file_date = time.strftime('%Y_%m_%d') if date is None else date
+        json_content = TMDailyList.__get_file_content_json(date)
+
+        # 按格式输出
+        print('──────────%s──────────' % file_date)
+
+        # 输出未完成任务
+        print('► Uncompleted:')
+        for idx, m in enumerate(json_content['content']['uncompleted']):
+            mission = Mission()
+            mission.parse_from_json(m)
+            print("  □ %d. " % (idx + 1) + mission.content)
+
+        # 输出已完成任务
+        print('► Completed:')
+        for idx, m in enumerate(json_content['content']['completed']):
+            mission = Mission()
+            mission.parse_from_json(m)
+            print("  ■ %d. " % (idx + 1) + mission.content)
+
+        print("──────────────────────────────")
+
+    @staticmethod
+    def add(content=None, index=None):
+        """
+        向今日列表中添加内容
+        :return:
+        """
+        # TODO(coderyrh9236@gmail.com): 完成 add 方法
+        json_content = TMDailyList.__get_file_content_json()
+
+        if not content:
+            print('Please input mission content (content [priority]): ')
+            content, priority = input('> ')
+            if not priority:
+                m = Mission(content)
+
+        TMDailyList.show()
+
+    @staticmethod
+    def __get_file_content_json(date=None):
+        """
+        从文件中获取 json 对象
+        :param date:
+        :return:
+        """
+        file_date = time.strftime('%Y_%m_%d') if date is None else date
         file_name = DEFAULT_SAVE_PATH + file_date
 
         if not os.path.isfile(file_name):
@@ -87,28 +135,7 @@ class TMDailyList:
 
         json_content = json.loads(file_content)
 
-        # 按格式输出
-        print('──────────%s──────────' % file_date)
-
-        # 输出未完成任务
-        print('► Uncompleted:')
-        for i in json_content['content']['uncompleted']:
-            print("  □ " + i)
-
-        # 输出已完成任务
-        print('► Completed:')
-        for i in json_content['content']['uncompleted']:
-            print("  ■ " + i)
-
-        print("──────────────────────────────")
-
-    @staticmethod
-    def add():
-        """
-        向今日列表中添加内容
-        :return:
-        """
-        pass
+        return json_content
 
 
 if __name__ == '__main__':
@@ -128,3 +155,5 @@ if __name__ == '__main__':
             pattern = re.compile(r'^\d{4}_\d{2}_\d{2}$')
             if not pattern.match(arguments['-d']):
                 print("Input date should like this: 2016_09_23")
+            else:
+                TMDailyList.show(arguments['-d'])
