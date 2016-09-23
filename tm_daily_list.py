@@ -64,7 +64,7 @@ class TMDailyList:
             print("Press 'A' to add content, other keys exit!")
             user_input_key = input('> ')
 
-            if user_input_key != 'a' or user_input_key != 'A':
+            if user_input_key != 'a' and user_input_key != 'A':
                 return
             else:
                 # 调用添加方法
@@ -77,7 +77,10 @@ class TMDailyList:
         :return:
         """
         file_date = time.strftime('%Y_%m_%d') if date is None else date
+
         json_content = TMDailyList.__get_file_content_json(date)
+        if not json_content:
+            return
 
         # 按格式输出
         print('──────────%s──────────' % file_date)
@@ -104,12 +107,17 @@ class TMDailyList:
         向今日列表中添加内容
         :return:
         """
-        # TODO(coderyrh9236@gmail.com): 完成 add 方法
         json_content = TMDailyList.__get_file_content_json()
+        if not json_content:
+            return
 
         if not content:
             print('Please input mission content (content [priority]): ')
-            content, priority = input('> ')
+            input_content = input('> ')
+            if len(input_content) == 2:
+                content, priority = input_content
+            else:
+                content = input_content
 
         m = Mission(content)
 
@@ -133,7 +141,7 @@ class TMDailyList:
 
         if not os.path.isfile(file_name):
             print('Error: There is no record at that date!')
-            return
+            return None
 
         with open(file_name, 'r') as file:
             file_content = file.read()
