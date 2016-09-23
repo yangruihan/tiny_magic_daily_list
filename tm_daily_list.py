@@ -6,7 +6,7 @@
 Usage:
     tm_daily_list.py (new | n)
     tm_daily_list.py (show | s) [-d <date>]
-    tm_daily_list.py (add | a) [<index>] <content>
+    tm_daily_list.py (add | a) <content> [-p <priority>]
     tm_daily_list.py (modify | f) <index> <content>
     tm_daily_list.py (complete | c) <index>
     tm_daily_list.py (redo | r) <index>
@@ -58,8 +58,7 @@ class TMDailyList:
         if os.path.isfile(file_name):
             print("Today's daily list has already created!")
         else:
-            with open(file_name, 'a') as file:
-                file.write(DEFAULT_JSON_CONTENT.format(file_date))
+            TMDailyList.__write_json_to_file(DEFAULT_JSON_CONTENT.format(file_date))
 
             print("Today's daily list has been created!")
             print("Press 'A' to add content, other keys exit!")
@@ -100,7 +99,7 @@ class TMDailyList:
         print("──────────────────────────────")
 
     @staticmethod
-    def add(content=None, index=None):
+    def add(content=None, priority=None):
         """
         向今日列表中添加内容
         :return:
@@ -111,9 +110,15 @@ class TMDailyList:
         if not content:
             print('Please input mission content (content [priority]): ')
             content, priority = input('> ')
-            if not priority:
-                m = Mission(content)
 
+        m = Mission(content)
+
+        if not priority:
+            json_content['content']['uncompleted'].append(m.get_json_str())
+        else:
+            json_content['content']['uncompleted'].insert(priority - 1, m.get_json_str())
+
+        TMDailyList.__write_json_to_file(json_content)
         TMDailyList.show()
 
     @staticmethod
@@ -137,6 +142,21 @@ class TMDailyList:
 
         return json_content
 
+    @staticmethod
+    def __write_json_to_file(json_content, date=None):
+        """
+        将 json 内容写入文件中
+        :param json_content: json 内容
+        :param date: 日期
+        :return:
+        """
+        file_date = time.strftime('%Y_%m_%d') if date is None else date
+        file_name = DEFAULT_SAVE_PATH + file_date
+        json_content = json_content if isinstance(json_content, str) else json.dumps(json_content, indent=2)
+
+        with open(file_name, 'w') as file:
+            file.write(json_content)
+
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='1.0')
@@ -152,8 +172,14 @@ if __name__ == '__main__':
         if not arguments['-d']:
             TMDailyList.show()
         else:
-            pattern = re.compile(r'^\d{4}_\d{2}_\d{2}$')
+            pattern = re.compile(r"^\d{4}_\d{2}_\d{2}$")
             if not pattern.match(arguments['-d']):
                 print("Input date should like this: 2016_09_23")
             else:
                 TMDailyList.show(arguments['-d'])
+
+    if arguments['a'] or arguments['add']:
+        if not arguments['-p']:
+            TMDailyList.add(arguments['<content>'])
+        else:
+            TMDailyList.add(arguments['<content>'], arguments['-p'])
