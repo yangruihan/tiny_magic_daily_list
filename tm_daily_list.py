@@ -130,6 +130,39 @@ class TMDailyList:
         TMDailyList.show()
 
     @staticmethod
+    def complete(index):
+        """
+        完成今日某个任务
+        :param index:
+        :return:
+        """
+        try:
+            index = int(index)
+        except ValueError:
+            print(' Error: Index should be Integer')
+            return
+
+        json_content = TMDailyList.__get_file_content_json()
+        if not json_content:
+            return
+
+        uncompleted_missions = json_content['content']['uncompleted']
+        if index - 1 > len(uncompleted_missions):
+            print('Error: Index is out of range!')
+            return
+
+        m = Mission()
+        m.parse_from_json(uncompleted_missions[index - 1])
+        del uncompleted_missions[index - 1]
+        m.complete()
+
+        completed_missions = json_content['content']['completed']
+        completed_missions.append(m.get_json_str())
+
+        TMDailyList.__write_json_to_file(json_content)
+        TMDailyList.show()
+
+    @staticmethod
     def __get_file_content_json(date=None):
         """
         从文件中获取 json 对象
@@ -176,7 +209,7 @@ if __name__ == '__main__':
     if arguments['n'] or arguments['new']:
         TMDailyList.create()
 
-    if arguments['s'] or arguments['show']:
+    elif arguments['s'] or arguments['show']:
         if not arguments['-d']:
             TMDailyList.show()
         else:
@@ -186,8 +219,11 @@ if __name__ == '__main__':
             else:
                 TMDailyList.show(arguments['-d'])
 
-    if arguments['a'] or arguments['add']:
+    elif arguments['a'] or arguments['add']:
         if not arguments['-p']:
             TMDailyList.add(arguments['<content>'])
         else:
             TMDailyList.add(arguments['<content>'], arguments['-p'])
+
+    elif arguments['c'] or arguments['complete']:
+        TMDailyList.complete(arguments['<index>'])
