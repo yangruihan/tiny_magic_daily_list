@@ -10,7 +10,7 @@ Usage:
     tm_daily_list.py (modify | f) <index> <content>
     tm_daily_list.py (complete | c) <index>
     tm_daily_list.py (redo | r) <index>
-    tm_daily_list.py (remove | m) <index>
+    tm_daily_list.py (remove | m) <index> [-c]
     tm_daily_list.py (delete | d) <date>
     tm_daily_list.py (-h | --help)
     tm_daily_list.py --version
@@ -54,7 +54,6 @@ class TMDailyList:
     def new():
         """
         创建今日列表
-        :return:
         """
         file_date = time.strftime('%Y_%m_%d')
         file_name = DEFAULT_SAVE_PATH + file_date
@@ -78,7 +77,6 @@ class TMDailyList:
     def show(date=None):
         """
         显示今日列表内容
-        :return:
         """
         file_date = time.strftime('%Y_%m_%d') if date is None else date
 
@@ -109,7 +107,6 @@ class TMDailyList:
     def add(content=None, priority=None):
         """
         向今日列表中添加内容
-        :return:
         """
         json_content = TMDailyList.__get_file_content_json()
         if not json_content:
@@ -139,7 +136,6 @@ class TMDailyList:
         修改某一任务内容
         :param index: 任务索引
         :param content: 修改后内容
-        :return:
         """
         if content.strip() == '':
             print(" Error: Content should not be Empty!")
@@ -158,8 +154,7 @@ class TMDailyList:
     def complete(index):
         """
         完成今日某个任务
-        :param index:
-        :return:
+        :param index: 任务索引号
         """
         try:
             index, json_content, uncompleted_missions = TMDailyList.__validate_input_index(index, FLAG_UNCOMPLETED_MISSIONS)
@@ -182,8 +177,7 @@ class TMDailyList:
     def redo(index):
         """
         重做今日某个任务
-        :param index:
-        :return:
+        :param index: 任务索引号
         """
         try:
             index, json_content, completed_missions = TMDailyList.__validate_input_index(index, FLAG_COMPLETED_MISSIONS)
@@ -198,6 +192,27 @@ class TMDailyList:
 
         uncompleted_missions = json_content['content']['uncompleted']
         uncompleted_missions.append(m.get_json_str())
+
+        TMDailyList.__write_json_to_file(json_content)
+        TMDailyList.show()
+
+    @staticmethod
+    def remove(index, flag=None):
+        """
+        删除今日任务中的某个任务，默认删除未完成任务
+        :param index: 任务索引号
+        :param flag: 标记，如果 flag 不为 None，则删除已完成的某个任务
+        """
+        try:
+            if flag: # 删除已完成的某个任务
+                index, json_content, missions = TMDailyList.__validate_input_index(index, FLAG_COMPLETED_MISSIONS)
+            else:
+                index, json_content, missions = TMDailyList.__validate_input_index(index, FLAG_UNCOMPLETED_MISSIONS)
+        except TMException:
+            TMDailyList.show()
+            return
+
+        del missions[index]
 
         TMDailyList.__write_json_to_file(json_content)
         TMDailyList.show()
@@ -302,3 +317,9 @@ if __name__ == '__main__':
 
     elif arguments['r'] or arguments['redo']:
         TMDailyList.redo(arguments['<index>'])
+
+    elif arguments['m'] or arguments['remove']:
+        if arguments['-c']:
+            TMDailyList.remove(arguments['<index>'], True)
+        else:
+            TMDailyList.remove(arguments['<index>'])
