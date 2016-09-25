@@ -218,11 +218,23 @@ class TMDailyList:
         TMDailyList.show()
 
     @staticmethod
+    def delete(date):
+        """
+        删除某日任务文件
+        """
+        try:
+            TMDailyList.__delete_file(date)
+        except TMException:
+            return
+
+        print('Delete file success!\n')
+
+    @staticmethod
     def __validate_input_index(index, flag):
         """
         验证输入任务索引
-        :param index:
-        :return:
+        :param index: 任务索引
+        :return: 索引-1， json 内容， 任务
         """
         try:
             index = int(index)
@@ -250,14 +262,14 @@ class TMDailyList:
     def __get_file_content_json(date=None):
         """
         从文件中获取 json 对象
-        :param date:
-        :return:
+        :param date: 日期
+        :return: json 内容
         """
         file_date = time.strftime('%Y_%m_%d') if date is None else date
         file_name = DEFAULT_SAVE_PATH + file_date
 
         if not os.path.isfile(file_name):
-            print('Error: There is no record at that date!')
+            print('Error: There is no record at that date!\n')
             raise TMException('There is no record at that date')
 
         with open(file_name, 'r') as file:
@@ -268,12 +280,29 @@ class TMDailyList:
         return json_content
 
     @staticmethod
+    def __delete_file(file_date):
+        """
+        将某一日期文件删除
+        :param date: 日期
+        """
+        file_name = DEFAULT_SAVE_PATH + file_date
+
+        if not os.path.isfile(file_name):
+            print('Error: There is no file at that date!\n')
+            raise TMException('There is no file at that date')
+
+        try:
+            os.remove(file_name)
+        except OSError:
+            print('Error: Delete file fail!\n')
+            raise TMException('Delete file fail')
+
+    @staticmethod
     def __write_json_to_file(json_content, date=None):
         """
         将 json 内容写入文件中
         :param json_content: json 内容
         :param date: 日期
-        :return:
         """
         file_date = time.strftime('%Y_%m_%d') if date is None else date
         file_name = DEFAULT_SAVE_PATH + file_date
@@ -323,3 +352,6 @@ if __name__ == '__main__':
             TMDailyList.remove(arguments['<index>'], True)
         else:
             TMDailyList.remove(arguments['<index>'])
+
+    elif arguments['d'] or arguments['delete']:
+        TMDailyList.delete(arguments['<date>'])
