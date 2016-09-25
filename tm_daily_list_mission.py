@@ -26,6 +26,10 @@ class Mission:
         self.last_modify_time = time.strftime("%Y/%m/%d %H:%M:%S")
         self.complete_time = time.strftime("%Y/%m/%d %H:%M:%S")
 
+    def uncomplete(self):
+        self.last_modify_time = time.strftime("%Y/%m/%d %H:%M:%S")
+        self.complete_time = ""
+
     def get_json_str(self):
         """
         得到 json 字符串

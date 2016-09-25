@@ -45,6 +45,9 @@ DEFAULT_JSON_CONTENT = r"""{{
 }}
 """
 
+FLAG_COMPLETED_MISSIONS = 1
+FLAG_UNCOMPLETED_MISSIONS = 2
+
 
 class TMDailyList:
     @staticmethod
@@ -142,7 +145,7 @@ class TMDailyList:
             print(" Error: Content should not be Empty!")
 
         try:
-            index, json_content, uncompleted_missions = TMDailyList.__validate_input_index(index)
+            index, json_content, uncompleted_missions = TMDailyList.__validate_input_index(index, FLAG_UNCOMPLETED_MISSIONS)
         except TMException:
             TMDailyList.show()
             return
@@ -159,7 +162,7 @@ class TMDailyList:
         :return:
         """
         try:
-            index, json_content, uncompleted_missions = TMDailyList.__validate_input_index(index)
+            index, json_content, uncompleted_missions = TMDailyList.__validate_input_index(index, FLAG_UNCOMPLETED_MISSIONS)
         except TMException:
             TMDailyList.show()
             return
@@ -176,7 +179,31 @@ class TMDailyList:
         TMDailyList.show()
 
     @staticmethod
-    def __validate_input_index(index):
+    def redo(index):
+        """
+        重做今日某个任务
+        :param index:
+        :return:
+        """
+        try:
+            index, json_content, completed_missions = TMDailyList.__validate_input_index(index, FLAG_COMPLETED_MISSIONS)
+        except TMException:
+            TMDailyList.show()
+            return
+
+        m = Mission()
+        m.parse_from_json(completed_missions[index])
+        del completed_missions[index]
+        m.uncomplete()
+
+        uncompleted_missions = json_content['content']['uncompleted']
+        uncompleted_missions.append(m.get_json_str())
+
+        TMDailyList.__write_json_to_file(json_content)
+        TMDailyList.show()
+
+    @staticmethod
+    def __validate_input_index(index, flag):
         """
         验证输入任务索引
         :param index:
@@ -185,19 +212,24 @@ class TMDailyList:
         try:
             index = int(index)
         except ValueError:
-            print(" Error: Index should be Integer")
-            raise TMException("index should be Integer")
+            print(" Error: Index should be Integer!\n")
+            raise TMException("Index should be Integer")
 
-        json_content = TMDailyList.__get_file_content_json()
-        if not json_content:
-            raise TMException("Get content json from file error.")
+        try:
+            json_content = TMDailyList.__get_file_content_json()
+        except TMException as e:
+            raise e
 
-        uncompleted_missions = json_content["content"]["uncompleted"]
-        if index > len(uncompleted_missions):
-            print("Error: Index is out of range!")
+        if flag == FLAG_COMPLETED_MISSIONS:
+            missions = json_content["content"]["completed"]
+        elif flag == FLAG_UNCOMPLETED_MISSIONS:
+            missions = json_content["content"]["uncompleted"]
+
+        if index > len(missions):
+            print("Error: Index is out of range!\n")
             raise TMException("Index is out of range.")
 
-        return index - 1, json_content, uncompleted_missions
+        return index - 1, json_content, missions
 
     @staticmethod
     def __get_file_content_json(date=None):
@@ -211,7 +243,7 @@ class TMDailyList:
 
         if not os.path.isfile(file_name):
             print('Error: There is no record at that date!')
-            return None
+            raise TMException('There is no record at that date')
 
         with open(file_name, 'r') as file:
             file_content = file.read()
@@ -267,3 +299,6 @@ if __name__ == '__main__':
 
     elif arguments['f'] or arguments['modify']:
         TMDailyList.modify(arguments['<index>'], arguments['<content>'])
+
+    elif arguments['r'] or arguments['redo']:
+        TMDailyList.redo(arguments['<index>'])
